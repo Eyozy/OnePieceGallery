@@ -79,6 +79,7 @@ ul li a:hover:before {
 .image-card {
   position: relative;
   overflow: hidden;
+  margin-bottom: 8px;
 }
 
 .image-card .image-card__img {
