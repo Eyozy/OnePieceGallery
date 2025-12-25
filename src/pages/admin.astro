@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AdminPanel from '../components/Admin/AdminPanel.vue';
+---
+
+<Layout title="Admin Connect - OnePiece Gallery">
+  <div class="admin-container">
+    <AdminPanel client:only="vue" />
+  </div>
+</Layout>
+
+<style>
+  .admin-container {
+    padding: 20px;
+    min-height: 60vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+</style>

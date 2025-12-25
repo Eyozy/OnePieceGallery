@@ -1,0 +1,13 @@
+// @ts-check
+import { defineConfig } from 'astro/config';
+
+import vue from '@astrojs/vue';
+
+// https://astro.build/config
+import vercel from '@astrojs/vercel';
+
+export default defineConfig({
+  output: 'server',
+  adapter: vercel({}),
+  integrations: [vue()]
+});

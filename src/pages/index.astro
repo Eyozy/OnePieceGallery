@@ -1,0 +1,254 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+
+const galleryItems = await getCollection('gallery');
+// Sort by date descending
+galleryItems.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Layout title="OnePiece 图集">
+	<main>
+
+
+		{galleryItems.length === 0 ? (
+			<div class="empty-state">
+				<div class="empty-icon">🏴‍☠️</div>
+				<h3>暂无宝藏</h3>
+				<p>前往 <a href="/admin">管理后台</a> 添加你的第一个发现！</p>
+			</div>
+		) : (
+			<div class="gallery-grid">
+				{galleryItems.map((item) => (
+					<div class="image-card">
+						<div class="image-wrapper">
+							<Image 
+								src={item.data.image} 
+								alt={item.data.title} 
+								width={600} 
+								class="gallery-image"
+							/>
+							<div class="overlay">
+								<div class="overlay-content">
+									<h3 class="image-title">{item.data.title}</h3>
+									<p class="image-author">作者 @{item.data.author}</p>
+									<a href={item.data.originalUrl} target="_blank" rel="noopener noreferrer" class="view-btn">
+										查看原图
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+		)}
+	</main>
+</Layout>
+
+<style>
+	main {
+		padding: 20px 0;
+	}
+
+	.hero {
+		text-align: center;
+		margin-bottom: 60px;
+		padding: 40px 20px;
+	}
+
+	.hero h2 {
+		font-size: 3rem;
+		font-weight: 800;
+		margin-bottom: 10px;
+		background: linear-gradient(135deg, var(--text-main) 0%, var(--text-muted) 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+	}
+
+	.hero p {
+		color: var(--text-muted);
+		font-size: 1.2rem;
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: 80px 20px;
+		color: var(--text-muted);
+		background: var(--bg-card);
+		border-radius: 20px;
+		margin: 0 auto;
+		max-width: 600px;
+		border: 1px solid var(--border-color);
+	}
+
+	.empty-icon {
+		font-size: 4rem;
+		margin-bottom: 20px;
+	}
+
+	.empty-state h3 {
+		font-size: 1.5rem;
+		color: var(--text-main);
+		margin-bottom: 10px;
+	}
+
+	.empty-state a {
+		color: var(--accent-blue);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.gallery-grid {
+		column-count: 3;
+		column-gap: 24px;
+	}
+
+	@media (max-width: 900px) {
+		.gallery-grid {
+			column-count: 2;
+		}
+	}
+
+	@media (max-width: 600px) {
+		.gallery-grid {
+			column-count: 1;
+		}
+		
+		.hero h2 {
+			font-size: 2rem;
+		}
+
+		.empty-state {
+			padding: 60px 20px;
+			margin: 0 10px;
+		}
+
+		.empty-icon {
+			font-size: 3rem;
+		}
+
+		.image-card {
+			margin-bottom: 16px;
+		}
+
+		.overlay {
+			padding: 16px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		main {
+			padding: 10px 0;
+		}
+
+		.gallery-grid {
+			column-gap: 0;
+		}
+
+		.empty-state {
+			padding: 50px 15px;
+			border-radius: 16px;
+		}
+
+		.empty-state h3 {
+			font-size: 1.25rem;
+		}
+
+		.image-wrapper {
+			border-radius: 12px;
+		}
+
+		.image-title {
+			font-size: 1rem;
+		}
+
+		.view-btn {
+			padding: 8px 16px;
+			font-size: 0.85rem;
+		}
+	}
+
+	.image-card {
+		break-inside: avoid;
+		margin-bottom: 24px;
+	}
+
+	.image-wrapper {
+		position: relative;
+		border-radius: 16px;
+		overflow: hidden;
+		background: var(--bg-card);
+		box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+		border: 1px solid var(--border-color);
+	}
+
+	.gallery-image {
+		width: 100%;
+		height: auto;
+		display: block;
+		transition: transform 0.5s ease;
+	}
+
+	.image-wrapper:hover .gallery-image {
+		transform: scale(1.05);
+	}
+
+    /* Overlay always needs to be dark for text readability unless we change text color too. 
+       Keeping it dark background with white text is safest for images. */
+	.overlay {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.4) 50%, transparent 100%);
+		padding: 24px;
+		opacity: 0;
+		transition: all 0.3s ease;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+	}
+
+	.image-wrapper:hover .overlay {
+		opacity: 1;
+	}
+
+	.overlay-content {
+		transform: translateY(20px);
+		transition: transform 0.3s ease;
+	}
+
+	.image-wrapper:hover .overlay-content {
+		transform: translateY(0);
+	}
+
+	.image-title {
+		font-size: 1.1rem;
+		font-weight: 700;
+		color: #f8fafc; /* Forces white text on dark overlay */
+		margin-bottom: 4px;
+	}
+
+	.image-author {
+		font-size: 0.9rem;
+		color: #94a3b8; /* Light gray for dark overlay */
+		margin-bottom: 16px;
+	}
+
+	.view-btn {
+		display: inline-block;
+		background-color: var(--accent-blue);
+		color: #0f172a;
+		padding: 10px 20px;
+		border-radius: 12px;
+		text-decoration: none;
+		font-weight: 700;
+		font-size: 0.9rem;
+		transition: all 0.2s;
+	}
+
+	.view-btn:hover {
+		background-color: #7dd3fc;
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+	}
+</style>
