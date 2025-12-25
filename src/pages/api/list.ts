@@ -22,11 +22,21 @@ export const GET: APIRoute = async () => {
             const imageMatch = content.match(/image:\s*"([^"]+)"/);
             const urlMatch = content.match(/originalUrl:\s*"([^"]+)"/);
 
+            // Build GitHub raw URL for production preview
+            const GITHUB_OWNER = import.meta.env.GITHUB_OWNER || process.env.GITHUB_OWNER || '';
+            const GITHUB_REPO = import.meta.env.GITHUB_REPO || process.env.GITHUB_REPO || '';
+            const imageRaw = imageMatch ? imageMatch[1] : '';
+            const imagePath = imageRaw.replace('../../assets/images/uploads/', '');
+            const imageUrl = (GITHUB_OWNER && GITHUB_REPO && imagePath)
+                ? `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/src/assets/images/uploads/${imagePath}`
+                : '';
+
             return {
                 slug,
                 title: titleMatch ? titleMatch[1] : slug,
                 author: authorMatch ? authorMatch[1] : 'Unknown',
                 image: imageMatch ? imageMatch[1] : '',
+                imageUrl, // GitHub raw URL for production
                 originalUrl: urlMatch ? urlMatch[1] : '',
             };
         }));

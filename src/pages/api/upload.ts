@@ -72,24 +72,74 @@ date: ${new Date().toISOString()}
         if (GITHUB_TOKEN && GITHUB_OWNER && GITHUB_REPO) {
             const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
-            // Upload Image
-            await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+            // Get the current commit SHA of the default branch
+            const { data: ref } = await octokit.request('GET /repos/{owner}/{repo}/git/ref/{ref}', {
                 owner: GITHUB_OWNER,
                 repo: GITHUB_REPO,
-                path: `src/assets/images/uploads/${imageFilename}`,
-                message: `Add image: ${title}`,
+                ref: 'heads/main',
+            });
+            const latestCommitSha = ref.object.sha;
+
+            // Get the tree SHA from the latest commit
+            const { data: commit } = await octokit.request('GET /repos/{owner}/{repo}/git/commits/{commit_sha}', {
+                owner: GITHUB_OWNER,
+                repo: GITHUB_REPO,
+                commit_sha: latestCommitSha,
+            });
+            const baseTreeSha = commit.tree.sha;
+
+            // Create blob for the image
+            const { data: imageBlob } = await octokit.request('POST /repos/{owner}/{repo}/git/blobs', {
+                owner: GITHUB_OWNER,
+                repo: GITHUB_REPO,
                 content: base64Image,
                 encoding: 'base64',
             });
 
-            // Upload Markdown
-            await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+            // Create blob for the markdown
+            const { data: mdBlob } = await octokit.request('POST /repos/{owner}/{repo}/git/blobs', {
                 owner: GITHUB_OWNER,
                 repo: GITHUB_REPO,
-                path: `src/content/gallery/${slug}.md`,
-                message: `Add gallery item: ${title}`,
                 content: Buffer.from(markdownContent).toString('base64'),
                 encoding: 'base64',
+            });
+
+            // Create a new tree with both files
+            const { data: newTree } = await octokit.request('POST /repos/{owner}/{repo}/git/trees', {
+                owner: GITHUB_OWNER,
+                repo: GITHUB_REPO,
+                base_tree: baseTreeSha,
+                tree: [
+                    {
+                        path: `src/assets/images/uploads/${imageFilename}`,
+                        mode: '100644',
+                        type: 'blob',
+                        sha: imageBlob.sha,
+                    },
+                    {
+                        path: `src/content/gallery/${slug}.md`,
+                        mode: '100644',
+                        type: 'blob',
+                        sha: mdBlob.sha,
+                    },
+                ],
+            });
+
+            // Create a new commit
+            const { data: newCommit } = await octokit.request('POST /repos/{owner}/{repo}/git/commits', {
+                owner: GITHUB_OWNER,
+                repo: GITHUB_REPO,
+                message: `feat(gallery): add ${title}`,
+                tree: newTree.sha,
+                parents: [latestCommitSha],
+            });
+
+            // Update the reference to point to the new commit
+            await octokit.request('PATCH /repos/{owner}/{repo}/git/refs/{ref}', {
+                owner: GITHUB_OWNER,
+                repo: GITHUB_REPO,
+                ref: 'heads/main',
+                sha: newCommit.sha,
             });
 
             return new Response(JSON.stringify({ message: 'Saved to GitHub successfully! Site rebuild triggered.' }), { status: 200 });

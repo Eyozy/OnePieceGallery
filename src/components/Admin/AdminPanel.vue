@@ -73,7 +73,8 @@ const fetchGalleryItems = async () => {
       const rawItems = data.items || [];
       galleryItems.value = rawItems.map(item => ({
         ...item,
-        image: item.image ? item.image.replace('../../', '/src/') : ''
+        // Use GitHub raw URL for production, fallback to local path for dev
+        image: item.imageUrl || (item.image ? item.image.replace('../../', '/src/') : '')
       }));
     }
   } catch (e) {
