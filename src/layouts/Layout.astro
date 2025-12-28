@@ -29,7 +29,10 @@ const { title } = Astro.props;
 						<h1>OnePiece 图集</h1>
 					</a>
 				</div>
-				<nav>
+				<button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+					<span class="hamburger"></span>
+				</button>
+				<nav class="nav-menu">
 					<ul>
 						<li><a href="/">首页</a></li>
 						<li><a href="/admin">管理</a></li>
@@ -42,6 +45,43 @@ const { title } = Astro.props;
 				<p>版权所有 &copy; {new Date().getFullYear()} OnePiece Gallery</p>
 			</footer>
 		</div>
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				const menuToggle = document.querySelector('.mobile-menu-toggle');
+				const navMenu = document.querySelector('.nav-menu');
+
+				if (menuToggle && navMenu) {
+					// 切换菜单
+					menuToggle.addEventListener('click', (e) => {
+						e.stopPropagation();
+						const isExpanded = menuToggle.getAttribute('aria-expanded') === 'true';
+						menuToggle.setAttribute('aria-expanded', String(!isExpanded));
+						menuToggle.classList.toggle('active');
+						navMenu.classList.toggle('active');
+					});
+
+					// 点击导航链接后关闭菜单
+					const navLinks = navMenu.querySelectorAll('a');
+					navLinks.forEach(link => {
+						link.addEventListener('click', () => {
+							menuToggle.classList.remove('active');
+							navMenu.classList.remove('active');
+							menuToggle.setAttribute('aria-expanded', 'false');
+						});
+					});
+
+					// 点击菜单外部关闭菜单
+					document.addEventListener('click', (e) => {
+						const target = e.target as Node;
+						if (target && !navMenu.contains(target) && !menuToggle.contains(target)) {
+							menuToggle.classList.remove('active');
+							navMenu.classList.remove('active');
+							menuToggle.setAttribute('aria-expanded', 'false');
+						}
+					});
+				}
+			});
+		</script>
 	</body>
 </html>
 
@@ -173,6 +213,64 @@ const { title } = Astro.props;
 		width: 100%;
 	}
 
+	/* 汉堡菜单按钮 */
+	.mobile-menu-toggle {
+		display: none;
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 10px;
+		z-index: 1001;
+		position: relative;
+		width: 44px;
+		height: 44px;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.hamburger {
+		display: block;
+		width: 24px;
+		height: 2px;
+		background-color: var(--text-main);
+		position: relative;
+		transition: background-color 0.3s ease;
+	}
+
+	.hamburger::before,
+	.hamburger::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		width: 24px;
+		height: 2px;
+		background-color: var(--text-main);
+		transition: all 0.3s ease;
+	}
+
+	.hamburger::before {
+		top: -8px;
+	}
+
+	.hamburger::after {
+		top: 8px;
+	}
+
+	/* 汉堡菜单激活状态（变成 X） */
+	.mobile-menu-toggle.active .hamburger {
+		background-color: transparent;
+	}
+
+	.mobile-menu-toggle.active .hamburger::before {
+		top: 0;
+		transform: rotate(45deg);
+	}
+
+	.mobile-menu-toggle.active .hamburger::after {
+		top: 0;
+		transform: rotate(-45deg);
+	}
+
 	footer {
 		margin-top: auto;
 		text-align: center;
@@ -185,13 +283,73 @@ const { title } = Astro.props;
 	/* Responsive Design */
 	@media (max-width: 768px) {
 		header {
-			flex-direction: column;
-			gap: 16px;
+			flex-direction: row;
+			justify-content: space-between;
 			padding: 16px 20px;
+			position: relative;
+			z-index: 100;
+		}
+
+		/* 显示汉堡菜单按钮 */
+		.mobile-menu-toggle {
+			display: flex;
+		}
+
+		/* 隐藏导航菜单（默认） */
+		.nav-menu {
+			position: absolute;
+			top: calc(100% + 16px);
+			right: 0;
+			left: auto;
+			width: auto;
+			min-width: 200px;
+			background: var(--bg-header);
+			backdrop-filter: blur(12px);
+			border: 1px solid var(--border-color);
+			border-radius: 16px;
+			overflow: hidden;
+			max-height: 0;
+			opacity: 0;
+			visibility: hidden;
+			transition: all 0.3s ease;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+			z-index: 1000;
+		}
+
+		/* 菜单展开状态 */
+		.nav-menu.active {
+			max-height: 300px;
+			opacity: 1;
+			visibility: visible;
 		}
 
 		nav ul {
-			gap: 20px;
+			flex-direction: column;
+			gap: 0;
+			padding: 8px 0;
+			align-items: stretch;
+		}
+
+		nav ul li {
+			width: 100%;
+		}
+
+		nav a {
+			display: block;
+			padding: 14px 24px;
+			width: 100%;
+			text-align: left;
+			transition: background-color 0.2s ease, color 0.2s ease;
+			white-space: nowrap;
+		}
+
+		nav a:hover {
+			background-color: rgba(2, 132, 199, 0.08);
+			color: var(--accent-blue);
+		}
+
+		nav a::after {
+			display: none;
 		}
 
 		.logo h1 {
@@ -212,6 +370,7 @@ const { title } = Astro.props;
 			margin: 15px 0;
 			padding: 12px 16px;
 			border-radius: 12px;
+			position: relative;
 		}
 
 		.logo-link {
@@ -227,12 +386,36 @@ const { title } = Astro.props;
 			font-size: 1.1rem;
 		}
 
-		nav ul {
-			gap: 16px;
+		.mobile-menu-toggle {
+			width: 40px;
+			height: 40px;
+			padding: 8px;
+		}
+
+		.hamburger,
+		.hamburger::before,
+		.hamburger::after {
+			width: 22px;
+		}
+
+		.hamburger::before {
+			top: -7px;
+		}
+
+		.hamburger::after {
+			top: 7px;
+		}
+
+		.nav-menu {
+			top: calc(100% + 12px);
+			right: 0;
+			min-width: 180px;
+			border-radius: 12px;
 		}
 
 		nav a {
-			font-size: 0.85rem;
+			font-size: 0.9rem;
+			padding: 12px 20px;
 		}
 
 		footer {
